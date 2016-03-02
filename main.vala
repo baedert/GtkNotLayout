@@ -181,8 +181,10 @@ abstract class LayoutManager : Gtk.Container {
 
   public int allocate_min_height (Gtk.Widget child, int x, int y, int width) {
     assert (child.parent == this);
-    width = int.max (1, width);
+    //width = int.max (1, width);
     int min, nat;
+    child.get_preferred_width (out min, out nat);
+    width = int.max (width, min);
     child.get_preferred_height_for_width (width, out min, out nat);
 
     Gtk.Allocation alloc = {};
@@ -193,6 +195,25 @@ abstract class LayoutManager : Gtk.Container {
 
     child.size_allocate (alloc);
     return min;
+  }
+
+  public void allocate_min_size (Gtk.Widget child, int x, int y, out int width, out int height) {
+    assert (child.parent == this);
+    int min, nat;
+    int min_width;
+    child.get_preferred_width (out min_width, out nat);
+    child.get_preferred_height_for_width (min_width, out min, out nat);
+
+    Gtk.Allocation alloc = {};
+    alloc.x = x + this.get_allocated_x ();
+    alloc.y = y + this.get_allocated_y ();
+    alloc.width = min_width;
+    alloc.height = min;
+
+    child.size_allocate (alloc);
+
+    width = alloc.width;
+    height = alloc.height;
   }
 
   public override void size_allocate (Gtk.Allocation allocation) {
@@ -224,6 +245,10 @@ class TestLayoutManager : LayoutManager {
     this.add (button6);
     this.add (button7);
 
+    for (int i =  0; i < 20; i ++)
+      list_box.add (new TweetRow ());
+
+    scroller.min_content_height = 100;
     scroller.add (list_box);
     this.add (scroller);
   }
